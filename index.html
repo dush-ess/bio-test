@@ -60,23 +60,11 @@
 </div>
 
 <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyPvVwSlVgJIMovicxNq2GxKNTFTdcO4tdoAvF13VuJBQ_CTDThc3R-2nwKK3R0SKQuRQ/exec';
 
     let appData = null;
     let currentQuestion = 0;
     let answers = [];
-
-    // Список олимпиад, которые должны быть (без служебных)
-    const validProfiles = [
-        "Высшая_проба",
-        "Ломоносов", 
-        "Физтех_био",
-        "СПБГУ_био",
-        "СПБГУ_мед",
-        "Сеча_Пир",
-        "Всесибирская",
-        "Мош_генетика"
-    ];
 
     const prettyNames = {
         "Высшая_проба": "Высшая проба",
@@ -94,12 +82,6 @@
             const response = await fetch(API_URL);
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
-            // Очищаем профили от служебных данных
-            if (data.profiles) {
-                data.profiles = data.profiles.filter(p => validProfiles.includes(p));
-            }
-            
             return data;
         } catch (err) {
             console.error(err);
@@ -166,9 +148,8 @@
     }
     
     function finishTest() {
-        // Подсчёт баллов ученика только по валидным олимпиадам
         const profileScores = {};
-        validProfiles.forEach(p => { profileScores[p] = 0; });
+        appData.profiles.forEach(p => { profileScores[p] = 0; });
         
         for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
             const q = appData.questions[qIdx];
@@ -176,14 +157,13 @@
             if (answerIdx !== undefined) {
                 const answer = q.answers[answerIdx];
                 for (let [profile, score] of Object.entries(answer.scores)) {
-                    if (validProfiles.includes(profile) && typeof score === 'number') {
+                    if (typeof score === 'number') {
                         profileScores[profile] += score;
                     }
                 }
             }
         }
         
-        // Преобразуем в массив для сортировки
         const resultsArray = [];
         for (const [techName, score] of Object.entries(profileScores)) {
             resultsArray.push({
@@ -196,10 +176,8 @@
         const top3 = resultsArray.slice(0, 3);
         const maxScore = resultsArray[0].score;
         
-        // Отправка результатов
         sendResults(resultsArray, top3);
         
-        // Формируем HTML результата
         let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
         resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
@@ -208,7 +186,7 @@
         }
         
         resultsHtml += `<h3>📋 Все олимпиады</h3>`;
-        resultsHtml += `点able`;
+        resultsHtml += `<table>`;
         for (let item of resultsArray) {
             const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
             resultsHtml += `
@@ -220,7 +198,7 @@
                 </tr>
             `;
         }
-        resultsHtml += `<\/table>`;
+        resultsHtml += `</table>`;
         
         if (top3[0].score - top3[1].score <= 10) {
             resultsHtml += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
