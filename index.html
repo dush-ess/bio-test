@@ -2,38 +2,227 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🧬 Олимпиадная профориентация</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fff9e6, #ffefc0);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        .card {
+            background: #fffef7;
+            border-radius: 32px;
+            padding: 30px 25px;
+            border: 1px solid #ffe6a3;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+        h1 { font-size: 28px; color: #c47a00; text-align: center; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #b8860b; margin-bottom: 30px; }
+        .question-text { font-size: 22px; font-weight: 600; color: #5c3d00; margin-bottom: 25px; }
+        .answer-btn {
+            display: block; width: 100%; text-align: left; background: #fff9ef;
+            border: 2px solid #ffdfa5; border-radius: 20px; padding: 16px 20px;
+            margin-bottom: 12px; font-size: 16px; color: #5c3d00; cursor: pointer;
+        }
+        .answer-btn:hover { background: #fff0d4; border-color: #e6a700; }
+        .selected { background: #f5b800; border-color: #d49400; color: white; }
+        .progress { background: #ffe6b3; border-radius: 20px; height: 10px; margin-bottom: 25px; }
+        .progress-bar { background: #f5b800; border-radius: 20px; height: 10px; width: 0%; transition: width 0.3s; }
+        .counter { text-align: right; font-size: 14px; color: #b8860b; margin-bottom: 15px; }
+        .restart-btn, .start-btn {
+            background: #f5b800; color: white; border: none; border-radius: 40px;
+            padding: 14px 28px; font-size: 16px; font-weight: bold; cursor: pointer;
+            margin-top: 25px; width: 100%;
+        }
+        .restart-btn:hover, .start-btn:hover { background: #d49400; }
+        footer { text-align: center; font-size: 12px; color: #c4a04a; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        td { padding: 8px 0; border-bottom: 1px solid #ffe6b3; }
+        .bar-container { background: #ffe6b3; border-radius: 20px; height: 20px; overflow: hidden; }
+        .bar { background: #f5b800; height: 20px; border-radius: 20px; width: 0%; }
+        h2, h3 { color: #c47a00; }
+        .tip { padding: 12px; border-radius: 16px; background: #fff3e0; border-left: 4px solid #f5b800; margin-top: 20px; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-size: 18px; font-weight: 600; color: #5c3d00; margin-bottom: 10px; }
+        .form-group input { width: 100%; padding: 14px; font-size: 16px; border: 2px solid #ffdfa5; border-radius: 20px; background: #fff9ef; }
+        .form-group input:focus { outline: none; border-color: #f5b800; }
+    </style>
 </head>
 <body>
-<h1>Тест</h1>
-<div id="output"></div>
+<div class="container">
+    <div class="card" id="app">
+        <h1>🧬 Олимпиадная профориентация</h1>
+        <div class="subtitle">Узнай, на какую олимпиаду сделать акцент</div>
+        <div id="dynamic-content"></div>
+    </div>
+    <footer>Результаты сохраняются</footer>
+</div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
 
-async function run() {
-    document.getElementById('output').innerHTML = 'Загрузка...';
-    
-    try {
-        const res = await fetch(API);
-        const data = await res.json();
+    const BEAUTY_NAMES = {
+        "Высшая_проба": "Высшая проба",
+        "Ломоносов": "Олимпиада «Ломоносов»",
+        "Физтех_био": "Физтех Биология",
+        "СПБГУ_био": "Олимпиада СПбГУ по биологии",
+        "СПБГУ_мед": "Олимпиада СПбГУ по медицине",
+        "Сеча_Пир": "Сеченовская и Пироговская олимпиады",
+        "Всесибирская": "Всесибирская олимпиада школьников",
+        "Мош_генетика": "МОШ по генетике"
+    };
+
+    let state = {
+        olympiads: [],
+        questions: [],
+        answers: [],
+        currentQ: 0,
+        studentName: ''
+    };
+
+    async function loadTestData() {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        console.log('API ответ:', data);
+        return data;
+    }
+
+    async function saveResults(resultsArray, top3) {
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                student_name: state.studentName,
+                results: resultsArray,
+                top1: top3[0],
+                top2: top3[1],
+                top3: top3[2]
+            })
+        });
+    }
+
+    function showNameForm() {
+        document.getElementById('dynamic-content').innerHTML = `
+            <div class="form-group">
+                <label>👤 Имя и фамилия</label>
+                <input type="text" id="studentName" placeholder="Биолог Олимпиадович">
+            </div>
+            <button class="start-btn" id="startTestBtn">Начать тест →</button>
+        `;
+        document.getElementById('startTestBtn').onclick = () => {
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) return alert('Введите имя');
+            state.studentName = name;
+            startTest();
+        };
+    }
+
+    async function startTest() {
+        document.getElementById('dynamic-content').innerHTML = 'Загрузка...';
+        const data = await loadTestData();
         
-        document.getElementById('output').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-        
-        // Проверяем, что есть olympiads
-        if (data.olympiads) {
-            console.log('olympiads тип:', Array.isArray(data.olympiads));
-            console.log('olympiads длина:', data.olympiads.length);
-        } else {
-            console.log('olympiads НЕТ в ответе!');
+        if (!data || !data.questions || data.questions.length === 0) {
+            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста';
+            return;
         }
         
-    } catch(e) {
-        document.getElementById('output').innerHTML = 'Ошибка: ' + e.message;
+        state.olympiads = data.olympiads;
+        state.questions = data.questions;
+        state.answers = new Array(state.questions.length);
+        state.currentQ = 0;
+        renderQuestion();
     }
-}
 
-run();
+    function renderQuestion() {
+        const q = state.questions[state.currentQ];
+        let html = `
+            <div class="counter">Вопрос ${state.currentQ+1} из ${state.questions.length}</div>
+            <div class="progress"><div class="progress-bar" style="width: ${((state.currentQ+1)/state.questions.length)*100}%"></div></div>
+            <div class="question-text">${q.text}</div>
+        `;
+        q.answers.forEach((a, idx) => {
+            html += `<button class="answer-btn" data-idx="${idx}">${a.text}</button>`;
+        });
+        document.getElementById('dynamic-content').innerHTML = html;
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            btn.onclick = () => selectAnswer(parseInt(btn.dataset.idx));
+        });
+    }
+
+    function selectAnswer(idx) {
+        state.answers[state.currentQ] = idx;
+        if (state.currentQ + 1 < state.questions.length) {
+            state.currentQ++;
+            renderQuestion();
+        } else {
+            finishTest();
+        }
+    }
+
+    function finishTest() {
+        const scores = {};
+        for (let o of state.olympiads) scores[o] = 0;
+
+        for (let i = 0; i < state.questions.length; i++) {
+            const ans = state.questions[i].answers[state.answers[i]];
+            for (let [ol, val] of Object.entries(ans.scores)) {
+                scores[ol] += val;
+            }
+        }
+
+        const results = [];
+        for (let olympiad in scores) {
+            results.push({
+                name: BEAUTY_NAMES[olympiad] || olympiad,
+                score: scores[olympiad]
+            });
+        }
+        results.sort((a, b) => b.score - a.score);
+        const top3 = results.slice(0, 3);
+        const maxScore = results[0].score;
+
+        saveResults(results, top3);
+
+        let html = `<h2>📊 Результаты, ${state.studentName}</h2>`;
+        html += `<h3>🎯 Топ-3</h3>`;
+        const medals = ['🥇', '🥈', '🥉'];
+        for (let i = 0; i < top3.length; i++) {
+            html += `<p style="font-size:18px; margin:8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+        }
+        html += `<h3>📋 Все олимпиады</h3>`;
+        html += `<table>`;
+        for (let r of results) {
+            let percent = maxScore ? Math.round((r.score / maxScore) * 100) : 0;
+            html += `
+                <tr>
+                    <td style="font-weight:500;">${r.name}</td>
+                    <td>${r.score} баллов</td>
+                    <td style="width:40%"><div class="bar-container"><div class="bar" style="width:${percent}%"></div></div></td>
+                    <td>${percent}%</td>
+                </tr>
+            `;
+        }
+        html += `<\/table>`;
+        
+        if (top3[0].score - top3[1].score <= 10) {
+            html += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
+        } else {
+            html += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
+        }
+        html += `<button class="restart-btn" id="restartBtn">🔄 Заново</button>`;
+        
+        document.getElementById('dynamic-content').innerHTML = html;
+        document.getElementById('restartBtn').onclick = () => {
+            state = { olympiads: [], questions: [], answers: [], currentQ: 0, studentName: '' };
+            showNameForm();
+        };
+    }
+
+    showNameForm();
 </script>
 </body>
 </html>
