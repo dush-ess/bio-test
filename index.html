@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧬 Олимпиадная профориентация</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +29,6 @@
             margin-bottom: 12px; font-size: 16px; color: #5c3d00; cursor: pointer;
         }
         .answer-btn:hover { background: #fff0d4; border-color: #e6a700; }
-        .selected { background: #f5b800; border-color: #d49400; color: white; }
         .progress { background: #ffe6b3; border-radius: 20px; height: 10px; margin-bottom: 25px; }
         .progress-bar { background: #f5b800; border-radius: 20px; height: 10px; width: 0%; transition: width 0.3s; }
         .counter { text-align: right; font-size: 14px; color: #b8860b; margin-bottom: 15px; }
@@ -91,29 +90,23 @@
         return data;
     }
 
-   async function saveResults(resultsArray, top3) {
-    console.log('Отправка результатов...');
-    console.log('Имя:', state.studentName);
-    console.log('Результаты:', resultsArray);
-    console.log('Топ3:', top3);
-    
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({
-                student_name: state.studentName,
-                results: resultsArray,
-                top1: top3[0],
-                top2: top3[1],
-                top3: top3[2]
-            })
-        });
-        console.log('Отправлено! (mode no-cors, ответ не виден)');
-    } catch(e) {
-        console.error('Ошибка при отправке:', e);
+    async function saveResults(resultsArray, top3) {
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    student_name: state.studentName,
+                    results: resultsArray,
+                    top1: top3[0],
+                    top2: top3[1],
+                    top3: top3[2]
+                })
+            });
+        } catch(e) {
+            console.error('Ошибка отправки:', e);
+        }
     }
-}
 
     function showNameForm() {
         document.getElementById('dynamic-content').innerHTML = `
@@ -163,59 +156,63 @@
         });
     }
 
-   function selectAnswer(idx) {
-    console.log('Выбран ответ', idx, 'на вопрос', state.currentQ);
-    state.answers[state.currentQ] = idx;
-    if (state.currentQ + 1 < state.questions.length) {
-        state.currentQ++;
-        renderQuestion();
-    } else {
-        console.log('Это последний вопрос, вызываем finishTest');
-        finishTest();
+    function selectAnswer(idx) {
+        state.answers[state.currentQ] = idx;
+        if (state.currentQ + 1 < state.questions.length) {
+            state.currentQ++;
+            renderQuestion();
+        } else {
+            finishTest();
+        }
     }
-}
 
     function finishTest() {
-        function finishTest() {
-    console.log('finishTest вызвана');
-    console.log('state.questions:', state.questions);
-    console.log('state.answers:', state.answers);
-    
-    // Дальше остальной код finishTest...
-}
+        // Подсчёт баллов
         const scores = {};
-        for (let o of state.olympiads) scores[o] = 0;
+        for (let i = 0; i < state.olympiads.length; i++) {
+            scores[state.olympiads[i]] = 0;
+        }
 
         for (let i = 0; i < state.questions.length; i++) {
-            const ans = state.questions[i].answers[state.answers[i]];
-            for (let [ol, val] of Object.entries(ans.scores)) {
-                scores[ol] += val;
+            const answerIndex = state.answers[i];
+            if (answerIndex === undefined) continue;
+            const answerScores = state.questions[i].answers[answerIndex].scores;
+            for (let j = 0; j < state.olympiads.length; j++) {
+                const olympiad = state.olympiads[j];
+                scores[olympiad] += answerScores[olympiad] || 0;
             }
         }
 
+        // Формируем массив результатов
         const results = [];
-        for (let olympiad in scores) {
+        for (let i = 0; i < state.olympiads.length; i++) {
+            const olympiad = state.olympiads[i];
             results.push({
                 name: BEAUTY_NAMES[olympiad] || olympiad,
                 score: scores[olympiad]
             });
         }
         results.sort((a, b) => b.score - a.score);
+        
         const top3 = results.slice(0, 3);
         const maxScore = results[0].score;
 
+        // Отправка
         saveResults(results, top3);
 
+        // Отображение
         let html = `<h2>📊 Результаты, ${state.studentName}</h2>`;
         html += `<h3>🎯 Топ-3</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
         for (let i = 0; i < top3.length; i++) {
-            html += `<p style="font-size:18px; margin:8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+            html += `<p><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
         }
+        
         html += `<h3>📋 Все олимпиады</h3>`;
-        html += `<table>`;
-        for (let r of results) {
-            let percent = maxScore ? Math.round((r.score / maxScore) * 100) : 0;
+        html += `点able`;
+        for (let i = 0; i < results.length; i++) {
+            const r = results[i];
+            const percent = maxScore > 0 ? Math.round((r.score / maxScore) * 100) : 0;
             html += `
                 <tr>
                     <td style="font-weight:500;">${r.name}</td>
@@ -225,7 +222,7 @@
                 </tr>
             `;
         }
-        html += `<\/table>`;
+        html += `点/table>`;
         
         if (top3[0].score - top3[1].score <= 10) {
             html += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
