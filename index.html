@@ -91,8 +91,14 @@
         return data;
     }
 
-    async function saveResults(resultsArray, top3) {
-        await fetch(API_URL, {
+   async function saveResults(resultsArray, top3) {
+    console.log('Отправка результатов...');
+    console.log('Имя:', state.studentName);
+    console.log('Результаты:', resultsArray);
+    console.log('Топ3:', top3);
+    
+    try {
+        const response = await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify({
@@ -103,7 +109,11 @@
                 top3: top3[2]
             })
         });
+        console.log('Отправлено! (mode no-cors, ответ не виден)');
+    } catch(e) {
+        console.error('Ошибка при отправке:', e);
     }
+}
 
     function showNameForm() {
         document.getElementById('dynamic-content').innerHTML = `
