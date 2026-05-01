@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>🧬 Олимпиадная профориентация</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #fff9e6, #ffefc0);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffefc0 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -16,39 +16,37 @@
         .card {
             background: #fffef7;
             border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
             padding: 30px 25px;
             border: 1px solid #ffe6a3;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
         }
-        h1 { font-size: 28px; color: #c47a00; text-align: center; margin-bottom: 8px; }
-        .subtitle { text-align: center; color: #b8860b; margin-bottom: 30px; }
+        h1 { font-size: 28px; color: #c47a00; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; color: #b8860b; margin-bottom: 30px; font-size: 16px; }
         .question-text { font-size: 22px; font-weight: 600; color: #5c3d00; margin-bottom: 25px; }
         .answer-btn {
             display: block; width: 100%; text-align: left; background: #fff9ef;
             border: 2px solid #ffdfa5; border-radius: 20px; padding: 16px 20px;
-            margin-bottom: 12px; font-size: 16px; color: #5c3d00; cursor: pointer;
+            margin-bottom: 12px; font-size: 16px; color: #5c3d00;
+            cursor: pointer; transition: all 0.2s ease;
         }
-        .answer-btn:hover { background: #fff0d4; border-color: #e6a700; }
+        .answer-btn:hover { background: #fff0d4; border-color: #e6a700; transform: translateX(5px); }
+        .selected { background: #f5b800; border-color: #d49400; color: white; }
         .progress { background: #ffe6b3; border-radius: 20px; height: 10px; margin-bottom: 25px; }
         .progress-bar { background: #f5b800; border-radius: 20px; height: 10px; width: 0%; transition: width 0.3s; }
         .counter { text-align: right; font-size: 14px; color: #b8860b; margin-bottom: 15px; }
-        .restart-btn, .start-btn {
+        .restart-btn {
             background: #f5b800; color: white; border: none; border-radius: 40px;
             padding: 14px 28px; font-size: 16px; font-weight: bold; cursor: pointer;
             margin-top: 25px; width: 100%;
         }
-        .restart-btn:hover, .start-btn:hover { background: #d49400; }
+        .restart-btn:hover { background: #d49400; }
         footer { text-align: center; font-size: 12px; color: #c4a04a; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; margin: 15px 0; }
         td { padding: 8px 0; border-bottom: 1px solid #ffe6b3; }
-        .bar-container { background: #ffe6b3; border-radius: 20px; height: 20px; overflow: hidden; }
+        .bar-container { background: #ffe6b3; border-radius: 20px; height: 20px; overflow: hidden; width: 100%; }
         .bar { background: #f5b800; height: 20px; border-radius: 20px; width: 0%; }
         h2, h3 { color: #c47a00; }
-        .tip { padding: 12px; border-radius: 16px; background: #fff3e0; border-left: 4px solid #f5b800; margin-top: 20px; }
-        .form-group { margin-bottom: 25px; }
-        .form-group label { display: block; font-size: 18px; font-weight: 600; color: #5c3d00; margin-bottom: 10px; }
-        .form-group input { width: 100%; padding: 14px; font-size: 16px; border: 2px solid #ffdfa5; border-radius: 20px; background: #fff9ef; }
-        .form-group input:focus { outline: none; border-color: #f5b800; }
+        .tip { padding: 12px; border-radius: 16px; margin-top: 20px; border-left: 4px solid #f5b800; background: #fff3e0; }
     </style>
 </head>
 <body>
@@ -56,15 +54,19 @@
     <div class="card" id="app">
         <h1>🧬 Олимпиадная профориентация</h1>
         <div class="subtitle">Узнай, на какую олимпиаду сделать акцент</div>
-        <div id="dynamic-content"></div>
+        <div id="dynamic-content">Загрузка теста...</div>
     </div>
-    <footer>Результаты сохраняются</footer>
+    <footer>Результаты сохраняются для улучшения теста</footer>
 </div>
 
 <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
 
-    const BEAUTY_NAMES = {
+    let appData = null;
+    let currentQuestion = 0;
+    let answers = [];
+
+    const prettyNames = {
         "Высшая_проба": "Высшая проба",
         "Ломоносов": "Олимпиада «Ломоносов»",
         "Физтех_био": "Физтех Биология",
@@ -75,170 +77,164 @@
         "Мош_генетика": "МОШ по генетике"
     };
 
-    let state = {
-        olympiads: [],
-        questions: [],
-        answers: [],
-        currentQ: 0,
-        studentName: ''
-    };
-
-    async function loadTestData() {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        console.log('API ответ:', data);
-        return data;
+    async function fetchTestData() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            return data;
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
     }
 
-    async function saveResults(resultsArray, top3) {
+    async function sendResults(results, top3) {
         try {
             await fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    student_name: state.studentName,
-                    results: resultsArray,
+                    results: results,
                     top1: top3[0],
                     top2: top3[1],
                     top3: top3[2]
                 })
             });
-        } catch(e) {
-            console.error('Ошибка отправки:', e);
+        } catch (err) {
+            console.warn('Не удалось сохранить результат:', err);
         }
-    }
-
-    function showNameForm() {
-        document.getElementById('dynamic-content').innerHTML = `
-            <div class="form-group">
-                <label>👤 Имя и фамилия</label>
-                <input type="text" id="studentName" placeholder="Биолог Олимпиадович">
-            </div>
-            <button class="start-btn" id="startTestBtn">Начать тест →</button>
-        `;
-        document.getElementById('startTestBtn').onclick = () => {
-            const name = document.getElementById('studentName').value.trim();
-            if (!name) return alert('Введите имя');
-            state.studentName = name;
-            startTest();
-        };
-    }
-
-    async function startTest() {
-        document.getElementById('dynamic-content').innerHTML = 'Загрузка...';
-        const data = await loadTestData();
-        
-        if (!data || !data.questions || data.questions.length === 0) {
-            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста';
-            return;
-        }
-        
-        state.olympiads = data.olympiads;
-        state.questions = data.questions;
-        state.answers = new Array(state.questions.length);
-        state.currentQ = 0;
-        renderQuestion();
     }
 
     function renderQuestion() {
-        const q = state.questions[state.currentQ];
+        const q = appData.questions[currentQuestion];
+        const answeredIndex = answers[currentQuestion];
+        
         let html = `
-            <div class="counter">Вопрос ${state.currentQ+1} из ${state.questions.length}</div>
-            <div class="progress"><div class="progress-bar" style="width: ${((state.currentQ+1)/state.questions.length)*100}%"></div></div>
+            <div class="counter">Вопрос ${currentQuestion+1} из ${appData.questions.length}</div>
+            <div class="progress"><div class="progress-bar" style="width: ${((currentQuestion+1)/appData.questions.length)*100}%"></div></div>
             <div class="question-text">${q.text}</div>
         `;
-        q.answers.forEach((a, idx) => {
-            html += `<button class="answer-btn" data-idx="${idx}">${a.text}</button>`;
+        
+        q.answers.forEach((ans, idx) => {
+            const answerText = ans.text;
+            const isSelected = (answeredIndex === idx);
+            html += `<button class="answer-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">${answerText}</button>`;
         });
-        document.getElementById('dynamic-content').innerHTML = html;
+        
+        html += `<div style="margin-top: 25px; text-align: center; font-size: 14px; color: #b8860b;">Выберите один вариант</div>`;
+        
+        const container = document.getElementById('dynamic-content');
+        container.innerHTML = html;
+        
         document.querySelectorAll('.answer-btn').forEach(btn => {
-            btn.onclick = () => selectAnswer(parseInt(btn.dataset.idx));
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                selectAnswer(idx);
+            });
         });
     }
-
-    function selectAnswer(idx) {
-        state.answers[state.currentQ] = idx;
-        if (state.currentQ + 1 < state.questions.length) {
-            state.currentQ++;
+    
+    function selectAnswer(answerIdx) {
+        answers[currentQuestion] = answerIdx;
+        
+        if (currentQuestion + 1 < appData.questions.length) {
+            currentQuestion++;
             renderQuestion();
         } else {
             finishTest();
         }
     }
-
+    
     function finishTest() {
-        // Подсчёт баллов
-        const scores = {};
-        for (let i = 0; i < state.olympiads.length; i++) {
-            scores[state.olympiads[i]] = 0;
-        }
-
-        for (let i = 0; i < state.questions.length; i++) {
-            const answerIndex = state.answers[i];
-            if (answerIndex === undefined) continue;
-            const answerScores = state.questions[i].answers[answerIndex].scores;
-            for (let j = 0; j < state.olympiads.length; j++) {
-                const olympiad = state.olympiads[j];
-                scores[olympiad] += answerScores[olympiad] || 0;
+        const profileScores = {};
+        appData.profiles.forEach(p => { profileScores[p] = 0; });
+        
+        for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
+            const q = appData.questions[qIdx];
+            const answerIdx = answers[qIdx];
+            if (answerIdx !== undefined) {
+                const answer = q.answers[answerIdx];
+                for (let [profile, score] of Object.entries(answer.scores)) {
+                    if (typeof score === 'number') {
+                        profileScores[profile] += score;
+                    }
+                }
             }
         }
-
-        // Формируем массив результатов
-        const results = [];
-        for (let i = 0; i < state.olympiads.length; i++) {
-            const olympiad = state.olympiads[i];
-            results.push({
-                name: BEAUTY_NAMES[olympiad] || olympiad,
-                score: scores[olympiad]
+        
+        const resultsArray = [];
+        for (const [techName, score] of Object.entries(profileScores)) {
+            resultsArray.push({
+                name: prettyNames[techName] || techName,
+                score: score
             });
         }
-        results.sort((a, b) => b.score - a.score);
+        resultsArray.sort((a, b) => b.score - a.score);
         
-        const top3 = results.slice(0, 3);
-        const maxScore = results[0].score;
-
-        // Отправка
-        saveResults(results, top3);
-
-        // Отображение
-        let html = `<h2>📊 Результаты, ${state.studentName}</h2>`;
-        html += `<h3>🎯 Топ-3</h3>`;
+        const top3 = resultsArray.slice(0, 3);
+        const maxScore = resultsArray[0].score;
+        
+        sendResults(resultsArray, top3);
+        
+        let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
+        resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
         for (let i = 0; i < top3.length; i++) {
-            html += `<p><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+            resultsHtml += `<p style="font-size: 18px; margin: 8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
         }
         
-        html += `<h3>📋 Все олимпиады</h3>`;
-        html += `点able`;
-        for (let i = 0; i < results.length; i++) {
-            const r = results[i];
-            const percent = maxScore > 0 ? Math.round((r.score / maxScore) * 100) : 0;
-            html += `
+        resultsHtml += `<h3>📋 Все олимпиады</h3>`;
+        resultsHtml += `<table>`;
+        for (let item of resultsArray) {
+            const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
+            resultsHtml += `
                 <tr>
-                    <td style="font-weight:500;">${r.name}</td>
-                    <td>${r.score} баллов</td>
-                    <td style="width:40%"><div class="bar-container"><div class="bar" style="width:${percent}%"></div></div></td>
-                    <td>${percent}%</td>
+                    <td style="font-weight: 500;">${item.name}</td>
+                    <td>${item.score} баллов</td>
+                    <td style="width: 40%;"><div class="bar-container"><div class="bar" style="width: ${percent}%;"></div></div></td>
+                    <td style="width: 45px;">${percent}%</td>
                 </tr>
             `;
         }
-        html += `点/table>`;
+        resultsHtml += `</table>`;
         
         if (top3[0].score - top3[1].score <= 10) {
-            html += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
+            resultsHtml += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
         } else {
-            html += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
+            resultsHtml += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
         }
-        html += `<button class="restart-btn" id="restartBtn">🔄 Заново</button>`;
         
-        document.getElementById('dynamic-content').innerHTML = html;
-        document.getElementById('restartBtn').onclick = () => {
-            state = { olympiads: [], questions: [], answers: [], currentQ: 0, studentName: '' };
-            showNameForm();
-        };
+        resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
+        
+        document.getElementById('dynamic-content').innerHTML = resultsHtml;
+        
+        document.getElementById('restartBtn')?.addEventListener('click', () => {
+            currentQuestion = 0;
+            answers = [];
+            loadTest();
+        });
     }
-
-    showNameForm();
+    
+    async function loadTest() {
+        document.getElementById('dynamic-content').innerHTML = 'Загрузка вопросов...';
+        
+        const data = await fetchTestData();
+        if (!data || !data.questions) {
+            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста. Попробуйте позже.';
+            return;
+        }
+        
+        appData = data;
+        currentQuestion = 0;
+        answers = new Array(appData.questions.length).fill(undefined);
+        renderQuestion();
+    }
+    
+    loadTest();
 </script>
 </body>
+</html>
+
 </html>
