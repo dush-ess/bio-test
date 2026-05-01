@@ -12,7 +12,7 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e9edf2 100%);
+            background: linear-gradient(135deg, #fff9e6 0%, #ffefc0 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,28 +21,29 @@
             margin: 0 auto;
         }
         .card {
-            background: white;
+            background: #fffef7;
             border-radius: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
             padding: 30px 25px;
             margin-bottom: 20px;
+            border: 1px solid #ffe6a3;
         }
         h1 {
             font-size: 28px;
-            color: #1a4d2a;
+            color: #c47a00;
             margin-bottom: 10px;
             text-align: center;
         }
         .subtitle {
             text-align: center;
-            color: #556b5f;
+            color: #b8860b;
             margin-bottom: 30px;
             font-size: 16px;
         }
         .question-text {
             font-size: 22px;
             font-weight: 600;
-            color: #1e2f2a;
+            color: #5c3d00;
             margin-bottom: 25px;
             line-height: 1.3;
         }
@@ -50,35 +51,35 @@
             display: block;
             width: 100%;
             text-align: left;
-            background: #f8f9fc;
-            border: 2px solid #e2e8f0;
+            background: #fff9ef;
+            border: 2px solid #ffdfa5;
             border-radius: 20px;
             padding: 16px 20px;
             margin-bottom: 12px;
             font-size: 16px;
             font-family: inherit;
-            color: #1a2e2a;
+            color: #5c3d00;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .answer-btn:hover {
-            background: #eef2ff;
-            border-color: #2d6a4f;
+            background: #fff0d4;
+            border-color: #e6a700;
             transform: translateX(5px);
         }
         .selected {
-            background: #2d6a4f;
-            border-color: #1b4332;
+            background: #f5b800;
+            border-color: #d49400;
             color: white;
         }
         .progress {
-            background: #e2e8f0;
+            background: #ffe6b3;
             border-radius: 20px;
             height: 10px;
             margin-bottom: 25px;
         }
         .progress-bar {
-            background: #2d6a4f;
+            background: #f5b800;
             border-radius: 20px;
             height: 10px;
             width: 0%;
@@ -87,46 +88,11 @@
         .counter {
             text-align: right;
             font-size: 14px;
-            color: #6b7a73;
+            color: #b8860b;
             margin-bottom: 15px;
         }
-        .results {
-            font-size: 16px;
-            line-height: 1.5;
-            white-space: pre-line;
-        }
-        .results h2 {
-            color: #1a4d2a;
-            margin: 20px 0 15px;
-        }
-        .results table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        .results td {
-            padding: 8px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .results .rank {
-            font-weight: bold;
-            width: 40px;
-        }
-        .bar-container {
-            background: #e2e8f0;
-            border-radius: 20px;
-            height: 20px;
-            overflow: hidden;
-            width: 100%;
-        }
-        .bar {
-            background: #2d6a4f;
-            height: 20px;
-            border-radius: 20px;
-            width: 0%;
-        }
         .restart-btn {
-            background: #1a4d2a;
+            background: #f5b800;
             color: white;
             border: none;
             border-radius: 40px;
@@ -139,17 +105,52 @@
             transition: background 0.2s;
         }
         .restart-btn:hover {
-            background: #0f3a20;
+            background: #d49400;
         }
         footer {
             text-align: center;
             font-size: 12px;
-            color: #889b92;
+            color: #c4a04a;
             margin-top: 20px;
         }
-        @media (max-width: 550px) {
-            .card { padding: 20px; }
-            .question-text { font-size: 18px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        td {
+            padding: 8px 0;
+            border-bottom: 1px solid #ffe6b3;
+        }
+        .bar-container {
+            background: #ffe6b3;
+            border-radius: 20px;
+            height: 20px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .bar {
+            background: #f5b800;
+            height: 20px;
+            border-radius: 20px;
+            width: 0%;
+        }
+        h2, h3 {
+            color: #c47a00;
+        }
+        .tip-warning {
+            background: #fff3e0;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 20px;
+            border-left: 4px solid #f5b800;
+        }
+        .tip-success {
+            background: #fff3e0;
+            padding: 12px;
+            border-radius: 16px;
+            margin-top: 20px;
+            border-left: 4px solid #f5b800;
         }
     </style>
 </head>
@@ -215,7 +216,7 @@
             html += `<button class="answer-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">${ans.text}</button>`;
         });
         
-        html += `<div style="margin-top: 25px; text-align: center; font-size: 14px; color: #6b7a73;">Выберите один вариант</div>`;
+        html += `<div style="margin-top: 25px; text-align: center; font-size: 14px; color: #b8860b;">Выберите один вариант</div>`;
         
         const container = document.getElementById('dynamic-content');
         container.innerHTML = html;
@@ -281,12 +282,12 @@
                 </tr>
             `;
         }
-        resultsHtml += ` licensierad`;
+        resultsHtml += `</table>`;
         
         if (top3[0].score - top3[1].score <= 10) {
-            resultsHtml += `<p style="background: #fff3cd; padding: 12px; border-radius: 16px; margin-top: 20px;">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</p>`;
+            resultsHtml += `<div class="tip-warning">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
         } else {
-            resultsHtml += `<p style="background: #e8f5e9; padding: 12px; border-radius: 16px; margin-top: 20px;">✅ Основной акцент на ${top3[0].name}</p>`;
+            resultsHtml += `<div class="tip-success">✅ Основной акцент на ${top3[0].name}</div>`;
         }
         
         resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
