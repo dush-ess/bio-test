@@ -208,7 +208,7 @@
         for (let item of resultsArray) {
             const percent = item.maxPossible === 0 ? 0 : Math.round((item.score / item.maxPossible) * 100);
             resultsHtml += `
-                <tr>
+                <td>
                     <td style="font-weight: 500;">${item.name}</td>
                     <td>${item.score} / ${item.maxPossible} баллов</td>
                     <td style="width: 40%;"><div class="bar-container"><div class="bar" style="width: ${percent}%;"></div></div></td>
