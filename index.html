@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>🧬 Олимпиадная профориентация</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #fff9e6 0%, #ffefc0 100%);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fff9e6, #ffefc0);
             min-height: 100vh;
             padding: 20px;
         }
@@ -16,78 +16,40 @@
         .card {
             background: #fffef7;
             border-radius: 32px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
             padding: 30px 25px;
             border: 1px solid #ffe6a3;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
         }
-        h1 { font-size: 28px; color: #c47a00; margin-bottom: 10px; text-align: center; }
-        .subtitle { text-align: center; color: #b8860b; margin-bottom: 30px; font-size: 16px; }
+        h1 { font-size: 28px; color: #c47a00; text-align: center; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #b8860b; margin-bottom: 30px; }
         .question-text { font-size: 22px; font-weight: 600; color: #5c3d00; margin-bottom: 25px; }
         .answer-btn {
             display: block; width: 100%; text-align: left; background: #fff9ef;
             border: 2px solid #ffdfa5; border-radius: 20px; padding: 16px 20px;
-            margin-bottom: 12px; font-size: 16px; color: #5c3d00;
-            cursor: pointer; transition: all 0.2s ease;
+            margin-bottom: 12px; font-size: 16px; color: #5c3d00; cursor: pointer;
         }
         .answer-btn:hover { background: #fff0d4; border-color: #e6a700; transform: translateX(5px); }
         .selected { background: #f5b800; border-color: #d49400; color: white; }
         .progress { background: #ffe6b3; border-radius: 20px; height: 10px; margin-bottom: 25px; }
         .progress-bar { background: #f5b800; border-radius: 20px; height: 10px; width: 0%; transition: width 0.3s; }
         .counter { text-align: right; font-size: 14px; color: #b8860b; margin-bottom: 15px; }
-        .restart-btn {
+        .restart-btn, .start-btn {
             background: #f5b800; color: white; border: none; border-radius: 40px;
             padding: 14px 28px; font-size: 16px; font-weight: bold; cursor: pointer;
             margin-top: 25px; width: 100%;
         }
-        .restart-btn:hover { background: #d49400; }
+        .restart-btn:hover, .start-btn:hover { background: #d49400; }
         footer { text-align: center; font-size: 12px; color: #c4a04a; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; margin: 15px 0; }
         td { padding: 8px 0; border-bottom: 1px solid #ffe6b3; }
-        .bar-container { background: #ffe6b3; border-radius: 20px; height: 20px; overflow: hidden; width: 100%; }
+        .bar-container { background: #ffe6b3; border-radius: 20px; height: 20px; overflow: hidden; }
         .bar { background: #f5b800; height: 20px; border-radius: 20px; width: 0%; }
         h2, h3 { color: #c47a00; }
-        .tip { padding: 12px; border-radius: 16px; margin-top: 20px; border-left: 4px solid #f5b800; background: #fff3e0; }
-        
-        /* Стили для формы ввода имени */
-        .form-group {
-            margin-bottom: 25px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 18px;
-            font-weight: 600;
-            color: #5c3d00;
-            margin-bottom: 10px;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 16px;
-            border: 2px solid #ffdfa5;
-            border-radius: 20px;
-            background: #fff9ef;
-            font-family: inherit;
-            color: #5c3d00;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: #f5b800;
-        }
-        .start-btn {
-            background: #f5b800;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 14px 28px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            width: 100%;
-        }
-        .start-btn:hover {
-            background: #d49400;
-        }
+        .tip { padding: 12px; border-radius: 16px; background: #fff3e0; border-left: 4px solid #f5b800; margin-top: 20px; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; font-size: 18px; font-weight: 600; color: #5c3d00; margin-bottom: 10px; }
+        .form-group input { width: 100%; padding: 14px; font-size: 16px; border: 2px solid #ffdfa5; border-radius: 20px; background: #fff9ef; }
+        .form-group input:focus { outline: none; border-color: #f5b800; }
     </style>
 </head>
 <body>
@@ -97,18 +59,21 @@
         <div class="subtitle">Узнай, на какую олимпиаду сделать акцент</div>
         <div id="dynamic-content"></div>
     </div>
-    <footer>Результаты сохраняются для улучшения теста</footer>
+    <footer>Результаты сохраняются</footer>
 </div>
 
 <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
 
-    let appData = null;
-    let currentQuestion = 0;
-    let answers = [];
-    let studentName = "";
+    let state = {
+        olympiads: [],
+        questions: [],
+        answers: [],
+        currentQ: 0,
+        studentName: ''
+    };
 
-    const prettyNames = {
+    const BEAUTY_NAMES = {
         "Высшая_проба": "Высшая проба",
         "Ломоносов": "Олимпиада «Ломоносов»",
         "Физтех_био": "Физтех Биология",
@@ -119,185 +84,124 @@
         "Мош_генетика": "МОШ по генетике"
     };
 
-    async function fetchTestData() {
-        try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            return data;
-        } catch (err) {
-            console.error(err);
-            return null;
-        }
+    async function loadTestData() {
+        const res = await fetch(API_URL);
+        return await res.json();
     }
 
-    async function sendResults(results, top3) {
+    async function saveResults(resultsArray, top3) {
         try {
             await fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    student_name: studentName,
-                    results: results,
+                    student_name: state.studentName,
+                    results: resultsArray,
                     top1: top3[0],
                     top2: top3[1],
                     top3: top3[2]
                 })
             });
-        } catch (err) {
-            console.warn('Не удалось сохранить результат:', err);
+        } catch(e) { console.log(e); }
+    }
+
+    function showNameForm() {
+        document.getElementById('dynamic-content').innerHTML = `
+            <div class="form-group">
+                <label>👤 Имя и фамилия</label>
+                <input type="text" id="studentName" placeholder="Например: Иван Петров">
+            </div>
+            <button class="start-btn" id="startTestBtn">Начать тест →</button>
+        `;
+        document.getElementById('startTestBtn').onclick = () => {
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) return alert('Пожалуйста, введите имя');
+            state.studentName = name;
+            startTest();
+        };
+    }
+
+    async function startTest() {
+        document.getElementById('dynamic-content').innerHTML = 'Загрузка...';
+        const data = await loadTestData();
+        if (!data || !data.questions) {
+            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста';
+            return;
         }
+        state.olympiads = data.olympiads;
+        state.questions = data.questions;
+        state.answers = new Array(state.questions.length);
+        state.currentQ = 0;
+        renderQuestion();
     }
 
     function renderQuestion() {
-        const q = appData.questions[currentQuestion];
-        const answeredIndex = answers[currentQuestion];
-        
-        let html = `
-            <div class="counter">Вопрос ${currentQuestion+1} из ${appData.questions.length}</div>
-            <div class="progress"><div class="progress-bar" style="width: ${((currentQuestion+1)/appData.questions.length)*100}%"></div></div>
-            <div class="question-text">${q.text}</div>
-        `;
-        
-        q.answers.forEach((ans, idx) => {
-            const answerText = ans.text;
-            const isSelected = (answeredIndex === idx);
-            html += `<button class="answer-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">${answerText}</button>`;
+        const q = state.questions[state.currentQ];
+        let html = `<div class="counter">Вопрос ${state.currentQ+1} из ${state.questions.length}</div>
+                    <div class="progress"><div class="progress-bar" style="width: ${((state.currentQ+1)/state.questions.length)*100}%"></div></div>
+                    <div class="question-text">${q.text}</div>`;
+        q.answers.forEach((a, idx) => {
+            html += `<button class="answer-btn" data-idx="${idx}">${a.text}</button>`;
         });
-        
-        html += `<div style="margin-top: 25px; text-align: center; font-size: 14px; color: #b8860b;">Выберите один вариант</div>`;
-        
-        const container = document.getElementById('dynamic-content');
-        container.innerHTML = html;
-        
+        document.getElementById('dynamic-content').innerHTML = html;
         document.querySelectorAll('.answer-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = parseInt(btn.dataset.idx);
-                selectAnswer(idx);
-            });
+            btn.onclick = () => selectAnswer(+btn.dataset.idx);
         });
     }
-    
-    function selectAnswer(answerIdx) {
-        answers[currentQuestion] = answerIdx;
-        
-        if (currentQuestion + 1 < appData.questions.length) {
-            currentQuestion++;
+
+    function selectAnswer(idx) {
+        state.answers[state.currentQ] = idx;
+        if (state.currentQ + 1 < state.questions.length) {
+            state.currentQ++;
             renderQuestion();
         } else {
             finishTest();
         }
     }
-    
+
     function finishTest() {
-        const profileScores = {};
-        appData.profiles.forEach(p => { profileScores[p] = 0; });
-        
-        for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
-            const q = appData.questions[qIdx];
-            const answerIdx = answers[qIdx];
-            if (answerIdx !== undefined) {
-                const answer = q.answers[answerIdx];
-                for (let [profile, score] of Object.entries(answer.scores)) {
-                    if (typeof score === 'number') {
-                        profileScores[profile] += score;
-                    }
-                }
+        const scores = {};
+        for (let o of state.olympiads) scores[o] = 0;
+
+        for (let i = 0; i < state.questions.length; i++) {
+            const ans = state.questions[i].answers[state.answers[i]];
+            for (let [ol, val] of Object.entries(ans.scores)) {
+                scores[ol] += val;
             }
         }
-        
-        const resultsArray = [];
-        for (const [techName, score] of Object.entries(profileScores)) {
-            resultsArray.push({
-                name: prettyNames[techName] || techName,
-                score: score
-            });
-        }
-        resultsArray.sort((a, b) => b.score - a.score);
-        
-        const top3 = resultsArray.slice(0, 3);
-        const maxScore = resultsArray[0].score;
-        
-        sendResults(resultsArray, top3);
-        
-        let resultsHtml = `<h2>📊 Результаты, ${studentName}</h2>`;
-        resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
+
+        const results = Object.entries(scores).map(([name, val]) => ({ name: BEAUTY_NAMES[name] || name, score: val }));
+        results.sort((a,b) => b.score - a.score);
+        const top3 = results.slice(0,3);
+        const maxScore = results[0].score;
+
+        saveResults(results, top3);
+
+        let html = `<h2>📊 Результаты, ${state.studentName}</h2>
+                    <h3>🎯 Топ-3</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
-        for (let i = 0; i < top3.length; i++) {
-            resultsHtml += `<p style="font-size: 18px; margin: 8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+        for (let i=0; i<top3.length; i++) html += `<p><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+        html += `<h3>📋 Все олимпиады</h3><table>`;
+        for (let r of results) {
+            let percent = maxScore ? Math.round((r.score / maxScore) * 100) : 0;
+            html += `<tr><td style="font-weight:500;">${r.name}</td><td>${r.score} баллов</td>
+                      <td style="width:40%"><div class="bar-container"><div class="bar" style="width:${percent}%"></div></div></td>
+                      <td>${percent}%</td></tr>`;
         }
-        
-        resultsHtml += `<h3>📋 Все олимпиады</h3>`;
-        resultsHtml += `点able`;
-        for (let item of resultsArray) {
-            const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
-            resultsHtml += `
-                <tr>
-                    <td style="font-weight: 500;">${item.name}</td>
-                    <td>${item.score} баллов</td>
-                    <td style="width: 40%;"><div class="bar-container"><div class="bar" style="width: ${percent}%;"></div></div></td>
-                    <td style="width: 45px;">${percent}%</td>
-                </tr>
-            `;
-        }
-        resultsHtml += `</table>`;
-        
+        html += `<\/table>`;
         if (top3[0].score - top3[1].score <= 10) {
-            resultsHtml += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
+            html += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
         } else {
-            resultsHtml += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
+            html += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
         }
-        
-        resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
-        
-        document.getElementById('dynamic-content').innerHTML = resultsHtml;
-        
-        document.getElementById('restartBtn')?.addEventListener('click', () => {
-            currentQuestion = 0;
-            answers = [];
-            studentName = "";
-            showNameForm();
-        });
-    }
-    
-    function showNameForm() {
-        const html = `
-            <div class="form-group">
-                <label>👤 Ваше имя и фамилия</label>
-                <input type="text" id="firstName" placeholder="Например: Анна Смирнова" autocomplete="off">
-            </div>
-            <button class="start-btn" id="startBtn">Начать тест →</button>
-        `;
+        html += `<button class="restart-btn" id="restartBtn">🔄 Заново</button>`;
         document.getElementById('dynamic-content').innerHTML = html;
-        
-        document.getElementById('startBtn').addEventListener('click', () => {
-            const nameInput = document.getElementById('firstName').value.trim();
-            if (nameInput === "") {
-                alert("Пожалуйста, введите имя и фамилию");
-                return;
-            }
-            studentName = nameInput;
-            loadTest();
-        });
+        document.getElementById('restartBtn').onclick = () => {
+            state = { olympiads: [], questions: [], answers: [], currentQ: 0, studentName: '' };
+            showNameForm();
+        };
     }
-    
-    async function loadTest() {
-        document.getElementById('dynamic-content').innerHTML = 'Загрузка вопросов...';
-        
-        const data = await fetchTestData();
-        if (!data || !data.questions) {
-            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста. Попробуйте позже.';
-            return;
-        }
-        
-        appData = data;
-        currentQuestion = 0;
-        answers = new Array(appData.questions.length).fill(undefined);
-        renderQuestion();
-    }
-    
-    // Показываем форму для имени при загрузке
+
     showNameForm();
 </script>
 </body>
