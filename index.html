@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧬 Олимпиадная профориентация</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +29,6 @@
             margin-bottom: 12px; font-size: 16px; color: #5c3d00; cursor: pointer;
         }
         .answer-btn:hover { background: #fff0d4; border-color: #e6a700; transform: translateX(5px); }
-        .selected { background: #f5b800; border-color: #d49400; color: white; }
         .progress { background: #ffe6b3; border-radius: 20px; height: 10px; margin-bottom: 25px; }
         .progress-bar { background: #f5b800; border-radius: 20px; height: 10px; width: 0%; transition: width 0.3s; }
         .counter { text-align: right; font-size: 14px; color: #b8860b; margin-bottom: 15px; }
@@ -109,7 +108,7 @@
         document.getElementById('dynamic-content').innerHTML = `
             <div class="form-group">
                 <label>👤 Имя и фамилия</label>
-                <input type="text" id="studentName" placeholder="Например: Олимпиадник Биологович">
+                <input type="text" id="studentName" placeholder="Биолог Олимпиадович">
             </div>
             <button class="start-btn" id="startTestBtn">Начать тест →</button>
         `;
@@ -165,19 +164,29 @@
 
     function finishTest() {
         const scores = {};
-        for (let o of state.olympiads) scores[o] = 0;
+        
+        for (let i = 0; i < state.olympiads.length; i++) {
+            const olympiad = state.olympiads[i];
+            scores[olympiad] = 0;
+        }
 
         for (let i = 0; i < state.questions.length; i++) {
             const ans = state.questions[i].answers[state.answers[i]];
-            for (let [ol, val] of Object.entries(ans.scores)) {
-                scores[ol] += val;
+            const answerScores = ans.scores;
+            for (let olympiad in answerScores) {
+                if (scores[olympiad] !== undefined) {
+                    scores[olympiad] += answerScores[olympiad];
+                }
             }
         }
 
-        const results = Object.entries(scores).map(([name, val]) => ({
-            name: BEAUTY_NAMES[name] || name,
-            score: val
-        }));
+        const results = [];
+        for (let olympiad in scores) {
+            results.push({
+                name: BEAUTY_NAMES[olympiad] || olympiad,
+                score: scores[olympiad]
+            });
+        }
         results.sort((a, b) => b.score - a.score);
         const top3 = results.slice(0, 3);
         const maxScore = results[0].score;
@@ -191,7 +200,7 @@
             html += `<p><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
         }
         html += `<h3>📋 Все олимпиады</h3>`;
-        html += `<table>`;
+        html += `点able`;
         for (let r of results) {
             let percent = maxScore ? Math.round((r.score / maxScore) * 100) : 0;
             html += `
@@ -203,7 +212,7 @@
                 </tr>
             `;
         }
-        html += `</table>`;
+        html += `点/table>`;
         
         if (top3[0].score - top3[1].score <= 10) {
             html += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
