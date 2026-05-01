@@ -47,6 +47,47 @@
         .bar { background: #f5b800; height: 20px; border-radius: 20px; width: 0%; }
         h2, h3 { color: #c47a00; }
         .tip { padding: 12px; border-radius: 16px; margin-top: 20px; border-left: 4px solid #f5b800; background: #fff3e0; }
+        
+        /* Стили для формы ввода имени */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            color: #5c3d00;
+            margin-bottom: 10px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #ffdfa5;
+            border-radius: 20px;
+            background: #fff9ef;
+            font-family: inherit;
+            color: #5c3d00;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #f5b800;
+        }
+        .start-btn {
+            background: #f5b800;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .start-btn:hover {
+            background: #d49400;
+        }
     </style>
 </head>
 <body>
@@ -54,17 +95,18 @@
     <div class="card" id="app">
         <h1>🧬 Олимпиадная профориентация</h1>
         <div class="subtitle">Узнай, на какую олимпиаду сделать акцент</div>
-        <div id="dynamic-content">Загрузка теста...</div>
+        <div id="dynamic-content"></div>
     </div>
     <footer>Результаты сохраняются для улучшения теста</footer>
 </div>
 
 <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyPvVwSlVgJIMovicxNq2GxKNTFTdcO4tdoAvF13VuJBQ_CTDThc3R-2nwKK3R0SKQuRQ/exec';
 
     let appData = null;
     let currentQuestion = 0;
     let answers = [];
+    let studentName = "";
 
     const prettyNames = {
         "Высшая_проба": "Высшая проба",
@@ -96,6 +138,7 @@
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    student_name: studentName,
                     results: results,
                     top1: top3[0],
                     top2: top3[1],
@@ -178,7 +221,7 @@
         
         sendResults(resultsArray, top3);
         
-        let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
+        let resultsHtml = `<h2>📊 Результаты, ${studentName}</h2>`;
         resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
         for (let i = 0; i < top3.length; i++) {
@@ -186,7 +229,7 @@
         }
         
         resultsHtml += `<h3>📋 Все олимпиады</h3>`;
-        resultsHtml += `<table>`;
+        resultsHtml += `点able`;
         for (let item of resultsArray) {
             const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
             resultsHtml += `
@@ -213,6 +256,28 @@
         document.getElementById('restartBtn')?.addEventListener('click', () => {
             currentQuestion = 0;
             answers = [];
+            studentName = "";
+            showNameForm();
+        });
+    }
+    
+    function showNameForm() {
+        const html = `
+            <div class="form-group">
+                <label>👤 Ваше имя и фамилия</label>
+                <input type="text" id="firstName" placeholder="Например: Анна Смирнова" autocomplete="off">
+            </div>
+            <button class="start-btn" id="startBtn">Начать тест →</button>
+        `;
+        document.getElementById('dynamic-content').innerHTML = html;
+        
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const nameInput = document.getElementById('firstName').value.trim();
+            if (nameInput === "") {
+                alert("Пожалуйста, введите имя и фамилию");
+                return;
+            }
+            studentName = nameInput;
             loadTest();
         });
     }
@@ -232,7 +297,8 @@
         renderQuestion();
     }
     
-    loadTest();
+    // Показываем форму для имени при загрузке
+    showNameForm();
 </script>
 </body>
 </html>
