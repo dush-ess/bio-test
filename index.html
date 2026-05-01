@@ -163,17 +163,26 @@
         });
     }
 
-    function selectAnswer(idx) {
-        state.answers[state.currentQ] = idx;
-        if (state.currentQ + 1 < state.questions.length) {
-            state.currentQ++;
-            renderQuestion();
-        } else {
-            finishTest();
-        }
+   function selectAnswer(idx) {
+    console.log('Выбран ответ', idx, 'на вопрос', state.currentQ);
+    state.answers[state.currentQ] = idx;
+    if (state.currentQ + 1 < state.questions.length) {
+        state.currentQ++;
+        renderQuestion();
+    } else {
+        console.log('Это последний вопрос, вызываем finishTest');
+        finishTest();
     }
+}
 
     function finishTest() {
+        function finishTest() {
+    console.log('finishTest вызвана');
+    console.log('state.questions:', state.questions);
+    console.log('state.answers:', state.answers);
+    
+    // Дальше остальной код finishTest...
+}
         const scores = {};
         for (let o of state.olympiads) scores[o] = 0;
 
