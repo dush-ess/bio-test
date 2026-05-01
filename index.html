@@ -70,7 +70,6 @@
         try {
             const response = await fetch(API_URL);
             const data = await response.json();
-            console.log('Данные от API:', data);
             if (data.error) throw new Error(data.error);
             return data;
         } catch (err) {
@@ -108,7 +107,7 @@
         `;
         
         q.answers.forEach((ans, idx) => {
-            const answerText = typeof ans === 'object' ? ans.text : ans;
+            const answerText = ans.text;
             const isSelected = (answeredIndex === idx);
             html += `<button class="answer-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">${answerText}</button>`;
         });
@@ -149,6 +148,7 @@
             "Мош_генетика": "МОШ по генетике"
         };
         
+        // Подсчёт баллов ученика
         const profileScores = {};
         appData.profiles.forEach(p => { profileScores[p] = 0; });
         
@@ -157,8 +157,7 @@
             const answerIdx = answers[qIdx];
             if (answerIdx !== undefined) {
                 const answer = q.answers[answerIdx];
-                const scores = answer.scores;
-                for (let [profile, score] of Object.entries(scores)) {
+                for (let [profile, score] of Object.entries(answer.scores)) {
                     if (typeof score === 'number') {
                         profileScores[profile] += score;
                     }
@@ -166,25 +165,32 @@
             }
         }
         
-        const resultsArray = Object.entries(profileScores).map(([name, score]) => ({ 
-            name: prettyNames[name] || name,
-            score: score
-        }));
-        resultsArray.sort((a,b) => b.score - a.score);
-        const top3 = resultsArray.slice(0,3);
+        // Преобразуем в массив для сортировки
+        const resultsArray = [];
+        for (const [techName, score] of Object.entries(profileScores)) {
+            resultsArray.push({
+                name: prettyNames[techName] || techName,
+                score: score
+            });
+        }
+        resultsArray.sort((a, b) => b.score - a.score);
+        
+        const top3 = resultsArray.slice(0, 3);
         const maxScore = resultsArray[0].score;
         
+        // Отправка результатов
         sendResults(resultsArray, top3);
         
+        // Формируем HTML результата
         let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
         resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
-        for (let i=0; i<top3.length; i++) {
+        for (let i = 0; i < top3.length; i++) {
             resultsHtml += `<p style="font-size: 18px; margin: 8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
         }
         
         resultsHtml += `<h3>📋 Все олимпиады</h3>`;
-        resultsHtml += `<table>`;
+        resultsHtml += `点able`;
         for (let item of resultsArray) {
             const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
             resultsHtml += `
@@ -196,7 +202,7 @@
                 </tr>
             `;
         }
-        resultsHtml += `</table>`;
+        resultsHtml += `<\/table>`;
         
         if (top3[0].score - top3[1].score <= 10) {
             resultsHtml += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
@@ -206,8 +212,7 @@
         
         resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
         
-        const container = document.getElementById('dynamic-content');
-        container.innerHTML = resultsHtml;
+        document.getElementById('dynamic-content').innerHTML = resultsHtml;
         
         document.getElementById('restartBtn')?.addEventListener('click', () => {
             currentQuestion = 0;
