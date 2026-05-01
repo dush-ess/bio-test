@@ -66,11 +66,40 @@
     let currentQuestion = 0;
     let answers = [];
 
+    // Список олимпиад, которые должны быть (без служебных)
+    const validProfiles = [
+        "Высшая_проба",
+        "Ломоносов", 
+        "Физтех_био",
+        "СПБГУ_био",
+        "СПБГУ_мед",
+        "Сеча_Пир",
+        "Всесибирская",
+        "Мош_генетика"
+    ];
+
+    const prettyNames = {
+        "Высшая_проба": "Высшая проба",
+        "Ломоносов": "Олимпиада «Ломоносов»",
+        "Физтех_био": "Физтех Биология",
+        "СПБГУ_био": "Олимпиада СПбГУ по биологии",
+        "СПБГУ_мед": "Олимпиада СПбГУ по медицине",
+        "Сеча_Пир": "Сеченовская и Пироговская олимпиады",
+        "Всесибирская": "Всесибирская олимпиада школьников",
+        "Мош_генетика": "МОШ по генетике"
+    };
+
     async function fetchTestData() {
         try {
             const response = await fetch(API_URL);
             const data = await response.json();
             if (data.error) throw new Error(data.error);
+            
+            // Очищаем профили от служебных данных
+            if (data.profiles) {
+                data.profiles = data.profiles.filter(p => validProfiles.includes(p));
+            }
+            
             return data;
         } catch (err) {
             console.error(err);
@@ -137,20 +166,9 @@
     }
     
     function finishTest() {
-        const prettyNames = {
-            "Высшая_проба": "Высшая проба",
-            "Ломоносов": "Олимпиада «Ломоносов»",
-            "Физтех_био": "Физтех Биология",
-            "СПБГУ_био": "Олимпиада СПбГУ по биологии",
-            "СПБГУ_мед": "Олимпиада СПбГУ по медицине",
-            "Сеча_Пир": "Сеченовская и Пироговская олимпиады",
-            "Всесибирская": "Всесибирская олимпиада школьников",
-            "Мош_генетика": "МОШ по генетике"
-        };
-        
-        // Подсчёт баллов ученика
+        // Подсчёт баллов ученика только по валидным олимпиадам
         const profileScores = {};
-        appData.profiles.forEach(p => { profileScores[p] = 0; });
+        validProfiles.forEach(p => { profileScores[p] = 0; });
         
         for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
             const q = appData.questions[qIdx];
@@ -158,7 +176,7 @@
             if (answerIdx !== undefined) {
                 const answer = q.answers[answerIdx];
                 for (let [profile, score] of Object.entries(answer.scores)) {
-                    if (typeof score === 'number') {
+                    if (validProfiles.includes(profile) && typeof score === 'number') {
                         profileScores[profile] += score;
                     }
                 }
