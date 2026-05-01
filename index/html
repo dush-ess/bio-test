@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Профориентация по биологии</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9edf2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px 25px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 28px;
+            color: #1a4d2a;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #556b5f;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .question-text {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1e2f2a;
+            margin-bottom: 25px;
+            line-height: 1.3;
+        }
+        .answer-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: #f8f9fc;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            color: #1a2e2a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .answer-btn:hover {
+            background: #eef2ff;
+            border-color: #2d6a4f;
+            transform: translateX(5px);
+        }
+        .selected {
+            background: #2d6a4f;
+            border-color: #1b4332;
+            color: white;
+        }
+        .progress {
+            background: #e2e8f0;
+            border-radius: 20px;
+            height: 10px;
+            margin-bottom: 25px;
+        }
+        .progress-bar {
+            background: #2d6a4f;
+            border-radius: 20px;
+            height: 10px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .counter {
+            text-align: right;
+            font-size: 14px;
+            color: #6b7a73;
+            margin-bottom: 15px;
+        }
+        .results {
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+        .results h2 {
+            color: #1a4d2a;
+            margin: 20px 0 15px;
+        }
+        .results table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .results td {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .results .rank {
+            font-weight: bold;
+            width: 40px;
+        }
+        .bar-container {
+            background: #e2e8f0;
+            border-radius: 20px;
+            height: 20px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .bar {
+            background: #2d6a4f;
+            height: 20px;
+            border-radius: 20px;
+            width: 0%;
+        }
+        .restart-btn {
+            background: #1a4d2a;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .restart-btn:hover {
+            background: #0f3a20;
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #889b92;
+            margin-top: 20px;
+        }
+        @media (max-width: 550px) {
+            .card { padding: 20px; }
+            .question-text { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card" id="app">
+        <h1>🧬 Олимпиадная биология</h1>
+        <div class="subtitle">Узнай, на какую олимпиаду сделать акцент</div>
+        <div id="dynamic-content">Загрузка теста...</div>
+    </div>
+    <footer>Результаты сохраняются для улучшения теста</footer>
+</div>
+
+<script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyPvVwSlVgJIMovicxNq2GxKNTFTdcO4tdoAvF13VuJBQ_CTDThc3R-2nwKK3R0SKQuRQ/exec';
+
+    let appData = null;
+    let currentQuestion = 0;
+    let answers = [];
+
+    async function fetchTestData() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            return data;
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    }
+
+    async function sendResults(results, top3) {
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    results: results,
+                    top1: top3[0],
+                    top2: top3[1],
+                    top3: top3[2]
+                })
+            });
+        } catch (err) {
+            console.warn('Не удалось сохранить результат:', err);
+        }
+    }
+
+    function renderQuestion() {
+        const q = appData.questions[currentQuestion];
+        const answeredIndex = answers[currentQuestion];
+        
+        let html = `
+            <div class="counter">Вопрос ${currentQuestion+1} из ${appData.questions.length}</div>
+            <div class="progress"><div class="progress-bar" style="width: ${((currentQuestion+1)/appData.questions.length)*100}%"></div></div>
+            <div class="question-text">${q.text}</div>
+        `;
+        
+        q.answers.forEach((ans, idx) => {
+            const isSelected = (answeredIndex === idx);
+            html += `<button class="answer-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">${ans.text}</button>`;
+        });
+        
+        html += `<div style="margin-top: 25px; text-align: center; font-size: 14px; color: #6b7a73;">Выберите один вариант</div>`;
+        
+        const container = document.getElementById('dynamic-content');
+        container.innerHTML = html;
+        
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                selectAnswer(idx);
+            });
+        });
+    }
+    
+    function selectAnswer(answerIdx) {
+        answers[currentQuestion] = answerIdx;
+        
+        if (currentQuestion + 1 < appData.questions.length) {
+            currentQuestion++;
+            renderQuestion();
+        } else {
+            finishTest();
+        }
+    }
+    
+    function finishTest() {
+        const profileScores = {};
+        appData.profiles.forEach(p => { profileScores[p] = 0; });
+        
+        for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
+            const q = appData.questions[qIdx];
+            const answerIdx = answers[qIdx];
+            if (answerIdx !== undefined) {
+                const scores = q.answers[answerIdx].scores;
+                for (let [profile, score] of Object.entries(scores)) {
+                    profileScores[profile] += score;
+                }
+            }
+        }
+        
+        const resultsArray = Object.entries(profileScores).map(([name, score]) => ({ name, score }));
+        resultsArray.sort((a,b) => b.score - a.score);
+        const top3 = resultsArray.slice(0,3);
+        const maxScore = resultsArray[0].score;
+        
+        sendResults(resultsArray, top3);
+        
+        let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
+        resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
+        const medals = ['🥇', '🥈', '🥉'];
+        for (let i=0; i<top3.length; i++) {
+            resultsHtml += `<p style="font-size: 18px; margin: 8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+        }
+        
+        resultsHtml += `<h3>📋 Все олимпиады</h3>`;
+        resultsHtml += `<table>`;
+        for (let item of resultsArray) {
+            const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
+            resultsHtml += `
+                <tr>
+                    <td style="font-weight: 500;">${item.name}</td>
+                    <td>${item.score} баллов</td>
+                    <td style="width: 40%;"><div class="bar-container"><div class="bar" style="width: ${percent}%;"></div></div></td>
+                    <td style="width: 45px;">${percent}%</td>
+                </tr>
+            `;
+        }
+        resultsHtml += ` licensierad`;
+        
+        if (top3[0].score - top3[1].score <= 10) {
+            resultsHtml += `<p style="background: #fff3cd; padding: 12px; border-radius: 16px; margin-top: 20px;">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</p>`;
+        } else {
+            resultsHtml += `<p style="background: #e8f5e9; padding: 12px; border-radius: 16px; margin-top: 20px;">✅ Основной акцент на ${top3[0].name}</p>`;
+        }
+        
+        resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
+        
+        const container = document.getElementById('dynamic-content');
+        container.innerHTML = resultsHtml;
+        
+        document.getElementById('restartBtn')?.addEventListener('click', () => {
+            currentQuestion = 0;
+            answers = [];
+            loadTest();
+        });
+    }
+    
+    async function loadTest() {
+        document.getElementById('dynamic-content').innerHTML = 'Загрузка вопросов...';
+        
+        const data = await fetchTestData();
+        if (!data || !data.questions) {
+            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста. Попробуйте позже.';
+            return;
+        }
+        
+        appData = data;
+        currentQuestion = 0;
+        answers = new Array(appData.questions.length).fill(undefined);
+        renderQuestion();
+    }
+    
+    loadTest();
+</script>
+</body>
+</html>
