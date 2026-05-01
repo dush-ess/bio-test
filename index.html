@@ -138,69 +138,85 @@
     }
     
     function finishTest() {
-        const profileScores = {};
-        appData.profiles.forEach(p => { profileScores[p] = 0; });
-        
-        for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
-            const q = appData.questions[qIdx];
-            const answerIdx = answers[qIdx];
-            if (answerIdx !== undefined) {
-                const answer = q.answers[answerIdx];
-                const scores = typeof answer === 'object' && answer.scores ? answer.scores : answer;
-                for (let [profile, score] of Object.entries(scores)) {
-                    if (typeof score === 'number') {
-                        profileScores[profile] += score;
-                    }
+    // Соответствие технических названий красивым
+    const prettyNames = {
+        "Высшая_проба": "Высшая проба",
+        "Ломоносов": "Олимпиада «Ломоносов»",
+        "Физтех_био": "Физтех Биология",
+        "СПБГУ_био": "Олимпиада СПбГУ по биологии",
+        "СПБГУ_мед": "Олимпиада СПбГУ по медицине",
+        "Сеча_Пир": "Сеченовская и Пироговская олимпиады",
+        "Всесибирская": "Всесибирская олимпиада школьников",
+        "Мош_генетика": "МОШ по генетике"
+    };
+    
+    const profileScores = {};
+    appData.profiles.forEach(p => { profileScores[p] = 0; });
+    
+    for (let qIdx = 0; qIdx < appData.questions.length; qIdx++) {
+        const q = appData.questions[qIdx];
+        const answerIdx = answers[qIdx];
+        if (answerIdx !== undefined) {
+            const answer = q.answers[answerIdx];
+            const scores = typeof answer === 'object' && answer.scores ? answer.scores : answer;
+            for (let [profile, score] of Object.entries(scores)) {
+                if (typeof score === 'number') {
+                    profileScores[profile] += score;
                 }
             }
         }
-        
-        const resultsArray = Object.entries(profileScores).map(([name, score]) => ({ name, score }));
-        resultsArray.sort((a,b) => b.score - a.score);
-        const top3 = resultsArray.slice(0,3);
-        const maxScore = resultsArray[0].score;
-        
-        sendResults(resultsArray, top3);
-        
-        let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
-        resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
-        const medals = ['🥇', '🥈', '🥉'];
-        for (let i=0; i<top3.length; i++) {
-            resultsHtml += `<p style="font-size: 18px; margin: 8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
-        }
-        
-        resultsHtml += `<h3>📋 Все олимпиады</h3>`;
-        resultsHtml += `<table>`;
-        for (let item of resultsArray) {
-            const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
-            resultsHtml += `
-                <table>
-                    <td style="font-weight: 500;">${item.name}</td>
-                    <td>${item.score} баллов</td>
-                    <td style="width: 40%;"><div class="bar-container"><div class="bar" style="width: ${percent}%;"></div></div></td>
-                    <td style="width: 45px;">${percent}%</td>
-                </tr>
-            `;
-        }
-        resultsHtml += ` licensierad`;
-        
-        if (top3[0].score - top3[1].score <= 10) {
-            resultsHtml += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
-        } else {
-            resultsHtml += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
-        }
-        
-        resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
-        
-        const container = document.getElementById('dynamic-content');
-        container.innerHTML = resultsHtml;
-        
-        document.getElementById('restartBtn')?.addEventListener('click', () => {
-            currentQuestion = 0;
-            answers = [];
-            loadTest();
-        });
     }
+    
+    const resultsArray = Object.entries(profileScores).map(([name, score]) => ({ 
+        name: prettyNames[name] || name,  // используем красивое имя
+        technicalName: name,
+        score: score 
+    }));
+    resultsArray.sort((a,b) => b.score - a.score);
+    const top3 = resultsArray.slice(0,3);
+    const maxScore = resultsArray[0].score;
+    
+    sendResults(resultsArray, top3);
+    
+    let resultsHtml = `<h2>📊 Ваши результаты</h2>`;
+    resultsHtml += `<h3>🎯 Топ-3 олимпиады</h3>`;
+    const medals = ['🥇', '🥈', '🥉'];
+    for (let i=0; i<top3.length; i++) {
+        resultsHtml += `<p style="font-size: 18px; margin: 8px 0;"><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+    }
+    
+    resultsHtml += `<h3>📋 Все олимпиады</h3>`;
+    resultsHtml += `<table>`;
+    for (let item of resultsArray) {
+        const percent = maxScore === 0 ? 0 : Math.round((item.score / maxScore) * 100);
+        resultsHtml += `
+            <tr>
+                <td style="font-weight: 500;">${item.name}</td>
+                <td>${item.score} баллов</td>
+                <td style="width: 40%;"><div class="bar-container"><div class="bar" style="width: ${percent}%;"></div></div></td>
+                <td style="width: 45px;">${percent}%</td>
+            </tr>
+        `;
+    }
+    resultsHtml += ` licensierad`;
+    
+    if (top3[0].score - top3[1].score <= 10) {
+        resultsHtml += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
+    } else {
+        resultsHtml += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
+    }
+    
+    resultsHtml += `<button class="restart-btn" id="restartBtn">🔄 Пройти тест заново</button>`;
+    
+    const container = document.getElementById('dynamic-content');
+    container.innerHTML = resultsHtml;
+    
+    document.getElementById('restartBtn')?.addEventListener('click', () => {
+        currentQuestion = 0;
+        answers = [];
+        loadTest();
+    });
+}
     
     async function loadTest() {
         document.getElementById('dynamic-content').innerHTML = 'Загрузка вопросов...';
