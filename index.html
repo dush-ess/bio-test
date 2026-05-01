@@ -65,14 +65,6 @@
 <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbzFhB7oO9BaEI16so08gTrEIsrbpu78_vzIYKtq8rbPmekNPuDXpwWJdkKWmfy9wv7XZw/exec';
 
-    let state = {
-        olympiads: [],
-        questions: [],
-        answers: [],
-        currentQ: 0,
-        studentName: ''
-    };
-
     const BEAUTY_NAMES = {
         "Высшая_проба": "Высшая проба",
         "Ломоносов": "Олимпиада «Ломоносов»",
@@ -84,25 +76,33 @@
         "Мош_генетика": "МОШ по генетике"
     };
 
+    let state = {
+        olympiads: [],
+        questions: [],
+        answers: [],
+        currentQ: 0,
+        studentName: ''
+    };
+
     async function loadTestData() {
-        const res = await fetch(API_URL);
-        return await res.json();
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        console.log('API ответ:', data);
+        return data;
     }
 
     async function saveResults(resultsArray, top3) {
-        try {
-            await fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    student_name: state.studentName,
-                    results: resultsArray,
-                    top1: top3[0],
-                    top2: top3[1],
-                    top3: top3[2]
-                })
-            });
-        } catch(e) { console.log(e); }
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({
+                student_name: state.studentName,
+                results: resultsArray,
+                top1: top3[0],
+                top2: top3[1],
+                top3: top3[2]
+            })
+        });
     }
 
     function showNameForm() {
@@ -115,7 +115,7 @@
         `;
         document.getElementById('startTestBtn').onclick = () => {
             const name = document.getElementById('studentName').value.trim();
-            if (!name) return alert('Пожалуйста, введите имя');
+            if (!name) return alert('Введите имя');
             state.studentName = name;
             startTest();
         };
@@ -124,10 +124,12 @@
     async function startTest() {
         document.getElementById('dynamic-content').innerHTML = 'Загрузка...';
         const data = await loadTestData();
-        if (!data || !data.questions) {
-            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста';
+        
+        if (!data || !data.questions || data.questions.length === 0) {
+            document.getElementById('dynamic-content').innerHTML = 'Ошибка загрузки теста. Проверьте таблицу.';
             return;
         }
+        
         state.olympiads = data.olympiads;
         state.questions = data.questions;
         state.answers = new Array(state.questions.length);
@@ -137,15 +139,17 @@
 
     function renderQuestion() {
         const q = state.questions[state.currentQ];
-        let html = `<div class="counter">Вопрос ${state.currentQ+1} из ${state.questions.length}</div>
-                    <div class="progress"><div class="progress-bar" style="width: ${((state.currentQ+1)/state.questions.length)*100}%"></div></div>
-                    <div class="question-text">${q.text}</div>`;
+        let html = `
+            <div class="counter">Вопрос ${state.currentQ+1} из ${state.questions.length}</div>
+            <div class="progress"><div class="progress-bar" style="width: ${((state.currentQ+1)/state.questions.length)*100}%"></div></div>
+            <div class="question-text">${q.text}</div>
+        `;
         q.answers.forEach((a, idx) => {
             html += `<button class="answer-btn" data-idx="${idx}">${a.text}</button>`;
         });
         document.getElementById('dynamic-content').innerHTML = html;
         document.querySelectorAll('.answer-btn').forEach(btn => {
-            btn.onclick = () => selectAnswer(+btn.dataset.idx);
+            btn.onclick = () => selectAnswer(parseInt(btn.dataset.idx));
         });
     }
 
@@ -170,31 +174,44 @@
             }
         }
 
-        const results = Object.entries(scores).map(([name, val]) => ({ name: BEAUTY_NAMES[name] || name, score: val }));
-        results.sort((a,b) => b.score - a.score);
-        const top3 = results.slice(0,3);
+        const results = Object.entries(scores).map(([name, val]) => ({
+            name: BEAUTY_NAMES[name] || name,
+            score: val
+        }));
+        results.sort((a, b) => b.score - a.score);
+        const top3 = results.slice(0, 3);
         const maxScore = results[0].score;
 
         saveResults(results, top3);
 
-        let html = `<h2>📊 Результаты, ${state.studentName}</h2>
-                    <h3>🎯 Топ-3</h3>`;
+        let html = `<h2>📊 Результаты, ${state.studentName}</h2>`;
+        html += `<h3>🎯 Топ-3</h3>`;
         const medals = ['🥇', '🥈', '🥉'];
-        for (let i=0; i<top3.length; i++) html += `<p><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
-        html += `<h3>📋 Все олимпиады</h3><table>`;
+        for (let i = 0; i < top3.length; i++) {
+            html += `<p><strong>${medals[i]} ${top3[i].name}</strong> — ${top3[i].score} баллов</p>`;
+        }
+        html += `<h3>📋 Все олимпиады</h3>`;
+        html += `<table>`;
         for (let r of results) {
             let percent = maxScore ? Math.round((r.score / maxScore) * 100) : 0;
-            html += `<tr><td style="font-weight:500;">${r.name}</td><td>${r.score} баллов</td>
-                      <td style="width:40%"><div class="bar-container"><div class="bar" style="width:${percent}%"></div></div></td>
-                      <td>${percent}%</td></tr>`;
+            html += `
+                <tr>
+                    <td style="font-weight:500;">${r.name}</td>
+                    <td>${r.score} баллов</td>
+                    <td style="width:40%"><div class="bar-container"><div class="bar" style="width:${percent}%"></div></div></td>
+                    <td>${percent}%</td>
+                </tr>
+            `;
         }
-        html += `<\/table>`;
+        html += `</table>`;
+        
         if (top3[0].score - top3[1].score <= 10) {
             html += `<div class="tip">⚠️ Совет: готовьтесь параллельно к ${top3[0].name} и ${top3[1].name}</div>`;
         } else {
             html += `<div class="tip">✅ Основной акцент на ${top3[0].name}</div>`;
         }
         html += `<button class="restart-btn" id="restartBtn">🔄 Заново</button>`;
+        
         document.getElementById('dynamic-content').innerHTML = html;
         document.getElementById('restartBtn').onclick = () => {
             state = { olympiads: [], questions: [], answers: [], currentQ: 0, studentName: '' };
